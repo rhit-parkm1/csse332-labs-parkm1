@@ -75,7 +75,7 @@ process_command(char *cmd)
   if(cmd[strlen(cmd) - 1] == '&') {
     cmd[strlen(cmd) - 1] = 0;
     // remove extra white spaces
-    end                  = cmd + strlen(cmd);
+    end                  = cmd + strlen(cmd) - 1;
     while(end != cmd && isspace(*end)) {
       *end = 0;
       end--;
