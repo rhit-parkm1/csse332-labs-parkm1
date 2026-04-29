@@ -55,6 +55,15 @@ rhmalloc_init(void)
   // =====
   //  Add code here to initialize heap_mem_start, freelist, and the content of
   //  freelist.
+
+  struct metadata *first = (struct metadata *)p;
+  first -> in_use = 0;
+  first -> size = MAX_HEAP_SIZE - sizeof(struct metadata);
+  first -> next = NULL;
+  first -> prev = NULL;
+
+  freelist = first;
+  heap_mem_start = p;
   return 0;
 }
 
@@ -82,6 +91,34 @@ rhmalloc(size_t size)
   //  Add code here to find a suitable block and return a pointer to the start
   //  of the usable memory region for it.
 
+  struct metadata *curr = freelist;
+  while(curr) {
+    if(!curr->in_use && curr->size >= size) {
+      size_t min_split = sizeof(struct metadata) + ALIGNMENT;
+
+      if(curr->size >= size + min_split) {
+        struct metadata *new_block = (struct metadata *)((char *)(curr + 1) + size);
+
+        new_block->in_use = 0;
+        new_block->size   = curr->size - size - sizeof(struct metadata);
+        new_block->next   = curr->next;
+        new_block->prev   = curr;
+ 
+        if(curr->next){
+          curr->next->prev = new_block;
+        }
+        curr->next  = new_block;
+        curr->size  = size;
+
+      }
+
+      curr->in_use = 1;
+      return (void *)(curr + 1);
+
+    }
+    curr = curr->next;
+  }
+
   // return here when we can't find a block, so set errno to ENOMEM.
   errno = ENOMEM;
   return 0;
@@ -94,4 +131,31 @@ rhfree(void *p)
   // =====
   //  Add code here to coalese the block to free with the next and previous
   //  blocks if applicable.
+
+ 
+  struct metadata *block = (struct metadata *)p - 1;
+ 
+  block->in_use = 0;
+ 
+  if(block->next && !block->next->in_use) {
+    struct metadata *next = block->next;
+ 
+    block->size += sizeof(struct metadata) + next->size;
+    block->next  = next->next;
+ 
+    if(next->next){
+      next->next->prev = block;
+    }
+  }
+ 
+  if(block->prev && !block->prev->in_use) {
+    struct metadata *prev = block->prev;
+ 
+    prev->size += sizeof(struct metadata) + block->size;
+    prev->next  = block->next;
+ 
+    if(block->next){
+      block->next->prev = prev;
+    }
+  }
 }
