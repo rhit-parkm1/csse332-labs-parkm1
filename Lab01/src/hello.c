@@ -1,3 +1,4 @@
+
 /************************************************************************************
  *
  * Copyright (c) 2025 Rose-Hulman Institute of Technology. All Rights Reserved.
@@ -7,18 +8,21 @@
  *
  ***********************************************************************************/
 #include "hello.h"
-
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
 /**
  * Implementation of print_hello_world
- */
+ */	
 int
 print_hello_world()
 {
-  void *p   = (void *)0xdeadbeef;
+  void *p   = malloc(sizeof(int));
   *(int *)p = 3;
 
-  sleep(20);
+  //sleep(20);
   printf("Hello world!\n");
 
-  return 4;
+  free(p);
+  return 3;
 }
